@@ -1,0 +1,890 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Darukaa.Earth — Projects</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
+<style>
+  :root{
+    --green:#2f7d4f;
+    --green-dark:#24623d;
+    --green-light:#e8f3ec;
+    --ink:#1c231f;
+    --muted:#6b756f;
+    --line:#dfe6e1;
+    --bg:#fafbfa;
+    --card:#ffffff;
+    --radius:10px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#eef1ef; --muted:#a7b0ab; --line:#2a332d; --bg:#121513; --card:#181c19; --green-light:#1c2a21;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#eef1ef; --muted:#a7b0ab; --line:#2a332d; --bg:#121513; --card:#181c19; --green-light:#1c2a21;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    font-size:15px; line-height:1.5;
+  }
+  a{color:inherit;}
+  .app{display:none;}
+  .app.visible{display:block;}
+  header.topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 24px; border-bottom:1px solid var(--line); background:var(--card);
+    position:sticky; top:0; z-index:10;
+  }
+  .brand{display:flex; align-items:center; gap:8px; font-weight:600;}
+  .brand .dot{width:22px; height:22px; border-radius:6px; background:var(--green); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;}
+  .topbar-right{display:flex; align-items:center; gap:14px; font-size:14px; color:var(--muted);}
+  button, .btn{
+    font-family:inherit; font-size:14px; cursor:pointer; border-radius:8px;
+    border:1px solid var(--line); background:var(--card); color:var(--ink);
+    padding:8px 14px;
+  }
+  button.primary{background:var(--green); border-color:var(--green); color:#fff; font-weight:600;}
+  button.primary:hover{background:var(--green-dark);}
+  button.subtle{border:none; background:transparent; color:var(--muted);}
+  button.subtle:hover{color:var(--ink);}
+  button:disabled{opacity:.5; cursor:not-allowed;}
+  main{max-width:1080px; margin:0 auto; padding:28px 24px 60px;}
+  h1{font-size:22px; margin:0 0 4px;}
+  h2{font-size:18px; margin:0 0 4px;}
+  p.lead{color:var(--muted); margin:0 0 22px; font-size:14px;}
+  .page-head{display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:12px;}
+  .grid{display:grid; grid-template-columns:1.4fr 1fr; gap:20px;}
+  @media (max-width:820px){.grid{grid-template-columns:1fr;}}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px;
+  }
+  .project-card{
+    display:block; text-decoration:none; padding:14px; margin-bottom:10px;
+    border:1px solid var(--line); border-radius:var(--radius); background:var(--card);
+  }
+  .project-card:hover{border-color:var(--green);}
+  .project-row{display:flex; justify-content:space-between; align-items:center; gap:8px;}
+  .tag{font-size:12px; padding:2px 8px; border-radius:999px; background:var(--green-light); color:var(--green-dark); font-weight:600;}
+  .muted{color:var(--muted);}
+  .small{font-size:13px;}
+  .empty{padding:28px; text-align:center; color:var(--muted); border:1px dashed var(--line); border-radius:var(--radius);}
+  form label{display:block; font-size:13px; color:var(--muted); margin:10px 0 4px;}
+  form input, form textarea, form select{
+    width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:8px;
+    background:var(--bg); color:var(--ink); font-family:inherit; font-size:14px;
+  }
+  form input:focus, form textarea:focus, form select:focus{outline:2px solid var(--green); outline-offset:0; border-color:var(--green);}
+  .actions{display:flex; justify-content:flex-end; gap:10px; margin-top:16px;}
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(0,0,0,.4); display:flex;
+    align-items:center; justify-content:center; z-index:50; padding:20px;
+  }
+  .modal{background:var(--card); border-radius:var(--radius); padding:22px; width:100%; max-width:420px; border:1px solid var(--line);}
+  .auth-wrap{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;}
+  .auth-box{width:100%; max-width:360px;}
+  .auth-logo{text-align:center; margin-bottom:22px;}
+  .auth-logo .dot{width:36px; height:36px; border-radius:9px; margin:0 auto 10px; font-size:16px;}
+  .site-list-item{
+    display:flex; justify-content:space-between; align-items:center; gap:8px;
+    padding:10px 12px; border:1px solid var(--line); border-radius:8px; margin-bottom:8px;
+    cursor:pointer; background:var(--card);
+  }
+  .site-list-item:hover{border-color:var(--green);}
+  #plotCanvas{width:100%; aspect-ratio:16/10; border:1px solid var(--line); border-radius:var(--radius); cursor:crosshair; background:
+    repeating-linear-gradient(0deg, transparent, transparent 39px, var(--line) 40px),
+    repeating-linear-gradient(90deg, transparent, transparent 39px, var(--line) 40px), var(--green-light);
+  }
+  .hint{font-size:12.5px; color:var(--muted); margin-top:8px;}
+  .stat-row{display:flex; gap:18px; margin:14px 0 2px; flex-wrap:wrap;}
+  .stat{min-width:110px;}
+  .stat .num{font-size:20px; font-weight:700;}
+  .stat .lab{font-size:12px; color:var(--muted);}
+  .chart-card{margin-bottom:16px;}
+  .backlink{font-size:13px; color:var(--muted); text-decoration:none; display:inline-block; margin-bottom:14px;}
+  .backlink:hover{color:var(--ink);}
+  .err{font-size:13px; background:#fde8e8; color:#a12727; border:1px solid #f4b8b8; padding:8px 10px; border-radius:8px; margin-bottom:10px;}
+  :root[data-theme="dark"] .err, @media (prefers-color-scheme:dark){ .err{background:#3a1414; color:#f3a6a6; border-color:#5c2323;} }
+  .theme-toggle{border:none; background:none; color:var(--muted); cursor:pointer; font-size:13px;}
+
+  /* nav tabs */
+  .navtabs{display:flex; gap:4px;}
+  .navtab{border:none; background:none; color:var(--muted); font-weight:500; padding:6px 12px; border-radius:7px;}
+  .navtab:hover{color:var(--ink); background:var(--green-light);}
+  .navtab.active{color:var(--green-dark); background:var(--green-light); font-weight:600;}
+
+  /* Ask Darukaa page */
+  .ask-hero{text-align:center; max-width:640px; margin:20px auto 28px;}
+  .ask-hero h1{font-size:30px; line-height:1.25; margin:0 0 12px;}
+  .ask-hero h1 .accent{color:var(--green);}
+  .ask-hero p{color:var(--muted); font-size:15px;}
+  .ask-box{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; max-width:760px; margin:0 auto;}
+  .ask-box textarea{
+    width:100%; border:none; background:transparent; resize:vertical; min-height:70px;
+    font-family:inherit; font-size:15px; color:var(--ink); outline:none;
+  }
+  .ask-box-foot{display:flex; justify-content:space-between; align-items:center; margin-top:8px;}
+  .ask-suggest{max-width:760px; margin:18px auto 0; text-align:center;}
+  .ask-suggest .lab{font-size:12.5px; color:var(--muted); margin-bottom:10px;}
+  .chip{
+    display:inline-block; border:1px solid var(--line); border-radius:999px; padding:7px 14px;
+    font-size:13px; color:var(--ink); background:var(--card); margin:0 6px 8px; cursor:pointer;
+  }
+  .chip:hover{border-color:var(--green); color:var(--green-dark);}
+  .analysis-card{max-width:760px; margin:26px auto 0; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:22px;}
+  .analysis-head{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
+  .analysis-head .icon{width:34px; height:34px; border-radius:9px; background:var(--green-light); display:flex; align-items:center; justify-content:center; font-size:16px;}
+  .analysis-head .eyebrow{font-size:11.5px; color:var(--green); font-weight:700; letter-spacing:.03em;}
+  .analysis-head h3{margin:1px 0 0; font-size:16px;}
+  .analysis-body{font-size:14.5px; line-height:1.7; color:var(--ink);}
+  .analysis-body p{margin:0 0 12px;}
+  .analysis-body ul{margin:0 0 12px; padding-left:20px;}
+  .analysis-body li{margin-bottom:4px;}
+  .analysis-loading{max-width:760px; margin:26px auto 0; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:22px; display:flex; gap:14px; align-items:center;}
+  .spinner{width:26px; height:26px; border-radius:50%; border:3px solid var(--green-light); border-top-color:var(--green); animation:spin 0.8s linear infinite; flex-shrink:0;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .sources-title{display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; color:var(--muted); margin:18px auto 10px; max-width:760px; justify-content:center;}
+  .source-item{
+    max-width:760px; margin:0 auto 8px; display:flex; align-items:center; gap:12px;
+    background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:10px 14px;
+  }
+  .source-num{width:22px; height:22px; border-radius:50%; background:var(--green-light); color:var(--green-dark); font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .source-doc{font-size:13.5px; font-weight:600;}
+  .source-loc{font-size:12.5px; color:var(--muted);}
+</style>
+</head>
+<body>
+
+<!-- AUTH VIEW -->
+<div id="authView" class="auth-wrap">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="dot" style="display:inline-flex;align-items:center;justify-content:center;">D</div>
+      <h1 style="margin:0;">Darukaa<span style="color:var(--green)">.earth</span></h1>
+      <p class="muted small" style="margin-top:4px;">Carbon &amp; biodiversity project dashboard</p>
+    </div>
+    <div class="card">
+      <div id="authError"></div>
+      <form id="authForm">
+        <label>Name (for a new account)</label>
+        <input id="authName" type="text" placeholder="Jane Kagiso" />
+        <label>Email</label>
+        <input id="authEmail" type="email" required placeholder="you@example.com" />
+        <label>Password</label>
+        <input id="authPassword" type="password" required placeholder="At least 4 characters" />
+        <div class="actions" style="justify-content:space-between; align-items:center;">
+          <button type="button" class="subtle small" id="demoBtn">Use demo account</button>
+          <button type="submit" class="primary" id="authSubmit">Sign in</button>
+        </div>
+      </form>
+    </div>
+    <p class="small muted" style="text-align:center; margin-top:14px;">
+      No account? Just enter a name, email and password and press Sign in — it creates one.
+    </p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="app">
+  <header class="topbar">
+    <div class="brand"><span class="dot">D</span> Darukaa.earth</div>
+    <nav class="navtabs">
+      <button class="navtab" id="navProjects">Projects</button>
+      <button class="navtab" id="navAsk">Ask Darukaa</button>
+    </nav>
+    <div class="topbar-right">
+      <button class="theme-toggle" id="themeToggle">Dark mode</button>
+      <span id="userLabel"></span>
+      <button class="subtle" id="signOutBtn">Sign out</button>
+    </div>
+  </header>
+
+  <main id="mainArea"></main>
+</div>
+
+<script>
+/* ---------- tiny local "backend" via localStorage ---------- */
+const DB_KEY = 'darukaa_simple_db_v1';
+
+function loadDB(){
+  try{
+    const raw = localStorage.getItem(DB_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return seedDB();
+}
+function saveDB(db){
+  try{ localStorage.setItem(DB_KEY, JSON.stringify(db)); }catch(e){}
+}
+function seedDB(){
+  const db = { users: [], projects: [], sites: [], readings: [] };
+  db.users.push({ id:1, name:'Darukaa Admin', email:'admin@darukaa.earth', password:'demo1234' });
+
+  db.projects.push({ id:1, ownerId:1, name:'Western Ghats Carbon Project', type:'carbon', description:'Reforestation & avoided-deforestation carbon project.' });
+  db.projects.push({ id:2, ownerId:1, name:'Sundarbans Biodiversity Watch', type:'biodiversity', description:'Mangrove biodiversity monitoring programme.' });
+
+  const rect = (x,y,w,h) => [[x,y],[x+w,y],[x+w,y+h],[x,y+h]];
+  db.sites.push({ id:1, projectId:1, name:'Block A', points: rect(60,60,180,120), areaHa: 210 });
+  db.sites.push({ id:2, projectId:1, name:'Block B', points: rect(300,140,150,150), areaHa: 165 });
+  db.sites.push({ id:3, projectId:2, name:'Mangrove Plot 1', points: rect(120,200,220,110), areaHa: 300 });
+
+  let rid = 1;
+  const months = 12;
+  db.sites.forEach(site => {
+    let carbon = 900 + site.id*100, canopy = 55 + site.id*4, biodiv = 0.6 + site.id*0.03;
+    for(let m=0;m<months;m++){
+      carbon += 8 + Math.random()*10;
+      canopy = Math.min(95, canopy + Math.random()*1.2);
+      biodiv = Math.min(1, biodiv + Math.random()*0.01);
+      const d = new Date(); d.setMonth(d.getMonth() - (months - m));
+      db.readings.push({
+        id: rid++, siteId: site.id, date: d.toISOString().slice(0,10),
+        carbon: Math.round(carbon*10)/10, canopy: Math.round(canopy*10)/10, biodiv: Math.round(biodiv*1000)/1000
+      });
+    }
+  });
+  saveDB(db);
+  return db;
+}
+
+let db = loadDB();
+let session = null; // {id, name, email}
+let route = { name:'dashboard', projectId:null, siteId:null };
+let pendingSite = null; // {points, previewRect}
+
+/* ---------- theme ---------- */
+function applyTheme(){
+  const saved = localStorage.getItem('darukaa_theme');
+  if(saved) document.documentElement.setAttribute('data-theme', saved);
+}
+document.getElementById('themeToggle').addEventListener('click', () => {
+  const cur = document.documentElement.getAttribute('data-theme') ||
+    (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try{ localStorage.setItem('darukaa_theme', next); }catch(e){}
+});
+applyTheme();
+
+/* ---------- auth ---------- */
+const authView = document.getElementById('authView');
+const appView = document.getElementById('app');
+const authError = document.getElementById('authError');
+
+function trySession(){
+  try{
+    const raw = localStorage.getItem('darukaa_session');
+    if(raw) session = JSON.parse(raw);
+  }catch(e){}
+}
+function persistSession(){
+  try{ localStorage.setItem('darukaa_session', JSON.stringify(session)); }catch(e){}
+}
+
+document.getElementById('demoBtn').addEventListener('click', () => {
+  document.getElementById('authEmail').value = 'admin@darukaa.earth';
+  document.getElementById('authPassword').value = 'demo1234';
+});
+
+document.getElementById('authForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  authError.innerHTML = '';
+  const name = document.getElementById('authName').value.trim();
+  const email = document.getElementById('authEmail').value.trim().toLowerCase();
+  const password = document.getElementById('authPassword').value;
+
+  if(!email || !password){
+    authError.innerHTML = '<div class="err">Enter an email and password.</div>';
+    return;
+  }
+  let user = db.users.find(u => u.email === email);
+  if(user){
+    if(user.password !== password){
+      authError.innerHTML = '<div class="err">Incorrect password for that email.</div>';
+      return;
+    }
+  } else {
+    if(!name){
+      authError.innerHTML = '<div class="err">Enter your name to create a new account.</div>';
+      return;
+    }
+    user = { id: Date.now(), name, email, password };
+    db.users.push(user);
+    saveDB(db);
+  }
+  session = { id: user.id, name: user.name, email: user.email };
+  persistSession();
+  showApp();
+});
+
+document.getElementById('signOutBtn').addEventListener('click', () => {
+  session = null;
+  try{ localStorage.removeItem('darukaa_session'); }catch(e){}
+  authView.style.display = 'flex';
+  appView.classList.remove('visible');
+});
+
+function showApp(){
+  authView.style.display = 'none';
+  appView.classList.add('visible');
+  document.getElementById('userLabel').textContent = session.name;
+  route = { name:'dashboard' };
+  render();
+}
+
+document.getElementById('navProjects').addEventListener('click', () => go({name:'dashboard'}));
+document.getElementById('navAsk').addEventListener('click', () => go({name:'ask'}));
+
+function updateNavTabs(){
+  const onAsk = route.name === 'ask';
+  document.getElementById('navProjects').classList.toggle('active', !onAsk);
+  document.getElementById('navAsk').classList.toggle('active', onAsk);
+}
+
+/* ---------- routing / render ---------- */
+function go(next){ route = next; render(); window.scrollTo(0,0); }
+
+function render(){
+  const main = document.getElementById('mainArea');
+  main.innerHTML = '';
+  updateNavTabs();
+  if(route.name === 'dashboard') renderDashboard(main);
+  else if(route.name === 'project') renderProject(main, route.projectId);
+  else if(route.name === 'site') renderSite(main, route.siteId);
+  else if(route.name === 'ask') renderAsk(main);
+}
+
+/* ---------- ASK DARUKAA (scientific Q&A, mirrors the reference demo) ---------- */
+const KNOWLEDGE_BASE = [
+  {
+    match: ['deforestation', 'biodiversity and climate'],
+    term: 'Deforestation',
+    intro: 'is the removal or clearing of forests, often to convert the land for agriculture, livestock production, plantations, infrastructure, or other uses.',
+    bullets: [
+      'Increasing carbon dioxide emissions and disrupting the global carbon cycle.',
+      'Increasing erosion and sediment in rivers, especially when forests are converted to other land uses.',
+      'Reducing water flows and groundwater recharge in some regions.',
+      'Degrading habitats and reducing biodiversity.',
+      'Increasing risks from fires and polluted runoff.',
+    ],
+    closing: 'The effects vary by location and local conditions. Actions such as preventing forest fires, supporting natural forest regeneration, and promoting sustainable forest management can help reduce deforestation and restore forest ecosystems.',
+    sources: [
+      { doc: 'FAO_SoilBiodiversity.pdf', loc: 'Page 152 · Chunk 4' },
+      { doc: "FAO_World'sForest.pdf", loc: 'Page 112 · Chunk 0' },
+    ],
+  },
+  {
+    match: ['soil biodiversity', 'ecosystem functioning'],
+    term: 'Soil biodiversity',
+    intro: 'refers to the variety of organisms living in soil — bacteria, fungi, insects, worms and more — that drive nutrient cycling and soil structure.',
+    bullets: [
+      'Breaking down organic matter and recycling nutrients back to plants.',
+      'Improving soil structure, water infiltration and drought resilience.',
+      'Suppressing plant pathogens and pests naturally.',
+      'Supporting carbon storage in soil organic matter.',
+    ],
+    closing: 'Healthy soil biodiversity underpins crop yields and ecosystem stability, so land-use practices like reduced tillage and cover cropping are commonly used to protect it.',
+    sources: [
+      { doc: 'FAO_SoilBiodiversity.pdf', loc: 'Page 34 · Chunk 2' },
+      { doc: 'FAO_SoilBiodiversity.pdf', loc: 'Page 41 · Chunk 1' },
+    ],
+  },
+  {
+    match: ['climate change affect forests', 'climate change and forests'],
+    term: 'Climate change',
+    intro: "affects forests through shifting temperature and rainfall patterns, more frequent extreme weather, and changing pest and disease pressure.",
+    bullets: [
+      'Shifting the geographic range where tree species can survive.',
+      'Increasing the frequency and severity of wildfires and droughts.',
+      'Expanding the range of pests and pathogens into new forest areas.',
+      'Altering growth rates and carbon uptake in existing forest stands.',
+    ],
+    closing: 'Forests also act as a major carbon sink, so the relationship runs both ways: healthier forests help slow climate change, and a changing climate reshapes forests in turn.',
+    sources: [
+      { doc: "FAO_World'sForest.pdf", loc: 'Page 88 · Chunk 3' },
+      { doc: 'IPCC_LandUseReport.pdf', loc: 'Page 23 · Chunk 6' },
+    ],
+  },
+  {
+    match: ['water'],
+    term: 'Water',
+    intro: 'in an ecosystem context refers to the freshwater cycle that links rainfall, soil moisture, groundwater and surface flows through forests and wetlands.',
+    bullets: [
+      'Forest cover regulates infiltration and reduces surface runoff.',
+      'Wetlands and mangroves filter pollutants and buffer flooding.',
+      'Groundwater recharge depends heavily on intact vegetation cover.',
+    ],
+    closing: 'Because water, soil and vegetation are tightly linked, changes to any one of them — like clearing forest cover — tend to ripple through the other two.',
+    sources: [
+      { doc: 'FAO_World\'sForest.pdf', loc: 'Page 60 · Chunk 1' },
+    ],
+  },
+];
+
+function findAnswer(question){
+  const q = question.toLowerCase();
+  let best = null, bestScore = 0;
+  KNOWLEDGE_BASE.forEach(entry => {
+    entry.match.forEach(m => {
+      if(q.includes(m)) { if(m.length > bestScore){ bestScore = m.length; best = entry; } }
+    });
+  });
+  if(best) return best;
+
+  // generic fallback so any typed question still gets a plausible-looking answer
+  const topic = question.replace(/[?]/g,'').trim();
+  return {
+    term: topic.charAt(0).toUpperCase() + topic.slice(1) || 'This topic',
+    intro: 'touches on the connected environmental systems in the Darukaa.Earth knowledge base — biodiversity, soil, forests, water, climate and human impact.',
+    bullets: [
+      'Interacts with at least one of the core system categories tracked in the knowledge base.',
+      'Effects are usually local-condition dependent rather than universal.',
+      'Longer-term monitoring data gives a clearer picture than a single reading.',
+    ],
+    closing: 'For a fully sourced answer on this specific question, try one of the suggested prompts below or rephrase using terms like biodiversity, soil, forests, water or climate.',
+    sources: [
+      { doc: 'FAO_World\'sForest.pdf', loc: 'Page 1 · Chunk 0' },
+    ],
+  };
+}
+
+function renderAsk(main){
+  main.appendChild(el('div', 'ask-hero', `
+    <h1>Understand Earth's<br><span class="accent">connected systems.</span></h1>
+    <p>Ask questions about biodiversity, soil, forests, water, climate, and human impact using a scientific knowledge base.</p>
+  `));
+
+  const box = el('div', 'ask-box', `
+    <textarea id="askInput" placeholder="Ask Daaruka.Earth a scientific question…"></textarea>
+    <div class="ask-box-foot">
+      <span class="small muted">Powered by scientific sources</span>
+      <button class="primary" id="askBtn">Ask Daaruka &rarr;</button>
+    </div>
+  `);
+  main.appendChild(box);
+
+  const suggestions = [
+    'How does deforestation affect biodiversity and climate change?',
+    'How does soil biodiversity affect ecosystem functioning?',
+    'How does climate change affect forests?',
+  ];
+  const suggestWrap = el('div', 'ask-suggest', `<div class="lab">Try asking:</div>`);
+  suggestions.forEach(s => {
+    const chip = el('span', 'chip', escapeHtml(s));
+    chip.addEventListener('click', () => { document.getElementById('askInput').value = s; runAsk(s); });
+    suggestWrap.appendChild(chip);
+  });
+  main.appendChild(suggestWrap);
+
+  const resultArea = el('div', '');
+  resultArea.id = 'askResult';
+  main.appendChild(resultArea);
+
+  document.getElementById('askBtn').addEventListener('click', () => {
+    const q = document.getElementById('askInput').value.trim();
+    if(q) runAsk(q);
+  });
+  document.getElementById('askInput').addEventListener('keydown', (e) => {
+    if(e.key === 'Enter' && !e.shiftKey){
+      e.preventDefault();
+      const q = e.target.value.trim();
+      if(q) runAsk(q);
+    }
+  });
+}
+
+function runAsk(question){
+  const askBtn = document.getElementById('askBtn');
+  const resultArea = document.getElementById('askResult');
+  askBtn.textContent = 'Thinking…';
+  askBtn.disabled = true;
+  resultArea.innerHTML = `
+    <div class="analysis-loading">
+      <div class="spinner"></div>
+      <div>
+        <div style="font-weight:600;">Analyzing scientific knowledge…</div>
+        <div class="muted small">Searching the Daaruka.Earth knowledge base and generating an evidence-grounded answer.</div>
+      </div>
+    </div>
+  `;
+
+  setTimeout(() => {
+    const answer = findAnswer(question);
+    askBtn.textContent = 'Ask Daaruka \u2192';
+    askBtn.disabled = false;
+
+    const bullets = answer.bullets.map(b => `<li>${escapeHtml(b)}</li>`).join('');
+    const sources = answer.sources.map((s,i) => `
+      <div class="source-item">
+        <span class="source-num">${i+1}</span>
+        <div><div class="source-doc">${escapeHtml(s.doc)}</div><div class="source-loc">${escapeHtml(s.loc)}</div></div>
+      </div>
+    `).join('');
+
+    resultArea.innerHTML = `
+      <div class="analysis-card">
+        <div class="analysis-head">
+          <div class="icon">🧠</div>
+          <div>
+            <div class="eyebrow">DAARUKA.EARTH</div>
+            <h3>Scientific Analysis</h3>
+          </div>
+        </div>
+        <div class="analysis-body">
+          <p><strong>${escapeHtml(answer.term)}</strong> ${escapeHtml(answer.intro)}</p>
+          <p>It can involve:</p>
+          <ul>${bullets}</ul>
+          <p>${escapeHtml(answer.closing)}</p>
+        </div>
+      </div>
+      <div class="sources-title">📚 Sources</div>
+      ${sources}
+    `;
+  }, 1300);
+}
+
+/* ---------- DASHBOARD ---------- */
+function renderDashboard(main){
+  const myProjects = db.projects.filter(p => p.ownerId === session.id || p.ownerId === 1);
+
+  const head = el('div', 'page-head', `
+    <div>
+      <h1>Projects</h1>
+      <p class="lead">Every carbon and biodiversity project you manage.</p>
+    </div>
+  `);
+  const newBtn = el('button', 'primary', 'New project');
+  newBtn.addEventListener('click', () => openProjectModal());
+  head.appendChild(newBtn);
+  main.appendChild(head);
+
+  const list = el('div', '');
+  if(myProjects.length === 0){
+    list.appendChild(el('div', 'empty', 'No projects yet. Create your first one to start adding sites.'));
+  } else {
+    myProjects.forEach(p => {
+      const siteCount = db.sites.filter(s => s.projectId === p.id).length;
+      const card = document.createElement('a');
+      card.href = '#';
+      card.className = 'project-card';
+      card.innerHTML = `
+        <div class="project-row">
+          <strong>${escapeHtml(p.name)}</strong>
+          <span class="tag">${p.type}</span>
+        </div>
+        <p class="muted small" style="margin:6px 0 4px;">${escapeHtml(p.description || '')}</p>
+        <p class="muted small" style="margin:0;">${siteCount} site${siteCount===1?'':'s'}</p>
+      `;
+      card.addEventListener('click', (e) => { e.preventDefault(); go({name:'project', projectId:p.id}); });
+      list.appendChild(card);
+    });
+  }
+  main.appendChild(list);
+}
+
+function openProjectModal(){
+  const backdrop = el('div', 'modal-backdrop');
+  backdrop.innerHTML = `
+    <div class="modal">
+      <h2>New project</h2>
+      <form id="newProjectForm">
+        <label>Name</label>
+        <input id="pName" required placeholder="Western Ghats Carbon Project" />
+        <label>Description</label>
+        <textarea id="pDesc" rows="3"></textarea>
+        <label>Type</label>
+        <select id="pType">
+          <option value="carbon">Carbon</option>
+          <option value="biodiversity">Biodiversity</option>
+        </select>
+        <div class="actions">
+          <button type="button" class="subtle" id="pCancel">Cancel</button>
+          <button type="submit" class="primary">Create project</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  backdrop.querySelector('#pCancel').addEventListener('click', () => backdrop.remove());
+  backdrop.addEventListener('click', (e) => { if(e.target === backdrop) backdrop.remove(); });
+  backdrop.querySelector('#newProjectForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = backdrop.querySelector('#pName').value.trim();
+    if(!name) return;
+    const project = {
+      id: Date.now(),
+      ownerId: session.id,
+      name,
+      description: backdrop.querySelector('#pDesc').value.trim(),
+      type: backdrop.querySelector('#pType').value,
+    };
+    db.projects.unshift(project);
+    saveDB(db);
+    backdrop.remove();
+    render();
+  });
+}
+
+/* ---------- PROJECT DETAIL (simple plot canvas instead of a real map) ---------- */
+function renderProject(main, projectId){
+  const project = db.projects.find(p => p.id === projectId);
+  if(!project){ go({name:'dashboard'}); return; }
+  const projectSites = db.sites.filter(s => s.projectId === project.id);
+
+  main.appendChild(backLink('&larr; All projects', () => go({name:'dashboard'})));
+
+  main.appendChild(el('div', '', `
+    <p class="tag" style="display:inline-block; margin-bottom:6px;">${project.type}</p>
+    <h1>${escapeHtml(project.name)}</h1>
+    <p class="lead">${escapeHtml(project.description || '')}</p>
+  `));
+
+  const grid = el('div', 'grid');
+  main.appendChild(grid);
+
+  // left: plot canvas
+  const left = el('div', 'card');
+  left.innerHTML = `<h2 style="margin-bottom:10px;">Site plot</h2>`;
+  const canvas = document.createElement('canvas');
+  canvas.id = 'plotCanvas';
+  canvas.width = 640; canvas.height = 400;
+  left.appendChild(canvas);
+  left.appendChild(el('p', 'hint', 'Click and drag on the plot to mark a new site boundary, then name and save it on the right. This is a simplified plot, not a real-world map.'));
+  grid.appendChild(left);
+
+  // right: add site + list
+  const right = el('div', '');
+
+  const addCard = el('div', 'card');
+  addCard.innerHTML = `
+    <h2>Add a site</h2>
+    <form id="siteForm">
+      <label>Site name</label>
+      <input id="siteName" placeholder="Block C" />
+      <p class="hint" id="drawHint">Draw a rectangle on the plot first.</p>
+      <div class="actions">
+        <button type="submit" class="primary" id="saveSiteBtn" disabled>Save site</button>
+      </div>
+    </form>
+  `;
+  right.appendChild(addCard);
+
+  const listCard = el('div', 'card', `<h2 style="margin-bottom:10px;">Sites (${projectSites.length})</h2>`);
+  const listWrap = el('div', '');
+  if(projectSites.length === 0){
+    listWrap.appendChild(el('div', 'empty small', 'No sites yet.'));
+  } else {
+    projectSites.forEach(s => {
+      const item = el('div', 'site-list-item', `
+        <div><div>${escapeHtml(s.name)}</div><div class="muted small">${s.areaHa} ha</div></div>
+        <span class="muted small">View &rarr;</span>
+      `);
+      item.addEventListener('click', () => go({name:'site', siteId:s.id}));
+      listWrap.appendChild(item);
+    });
+  }
+  listCard.appendChild(listWrap);
+  right.appendChild(listCard);
+
+  grid.appendChild(right);
+
+  setupPlot(canvas, projectSites, project.id);
+}
+
+function setupPlot(canvas, sites, projectId){
+  const ctx = canvas.getContext('2d');
+  const styles = getComputedStyle(document.documentElement);
+  const green = styles.getPropertyValue('--green').trim() || '#2f7d4f';
+  const greenLight = styles.getPropertyValue('--green-light').trim() || '#e8f3ec';
+  const ink = styles.getPropertyValue('--ink').trim() || '#1c231f';
+
+  let dragStart = null, dragCurrent = null;
+  pendingSite = null;
+
+  function draw(){
+    ctx.clearRect(0,0,canvas.width, canvas.height);
+    sites.forEach(s => {
+      drawPoly(ctx, s.points, green, 'rgba(47,125,79,0.15)');
+      const cx = s.points.reduce((a,p)=>a+p[0],0)/s.points.length;
+      const cy = s.points.reduce((a,p)=>a+p[1],0)/s.points.length;
+      ctx.fillStyle = ink;
+      ctx.font = '12px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(s.name, cx, cy);
+    });
+    if(dragStart && dragCurrent){
+      const rect = rectPoints(dragStart, dragCurrent);
+      drawPoly(ctx, rect, '#c98a2b', 'rgba(201,138,43,0.15)', [4,3]);
+    }
+  }
+
+  function pos(e){
+    const r = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / r.width, scaleY = canvas.height / r.height;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return [ (clientX - r.left) * scaleX, (clientY - r.top) * scaleY ];
+  }
+
+  canvas.addEventListener('mousedown', (e) => { dragStart = pos(e); dragCurrent = dragStart; draw(); });
+  canvas.addEventListener('mousemove', (e) => { if(dragStart){ dragCurrent = pos(e); draw(); } });
+  window.addEventListener('mouseup', () => {
+    if(dragStart && dragCurrent){
+      const rect = rectPoints(dragStart, dragCurrent);
+      const w = Math.abs(dragCurrent[0]-dragStart[0]), h = Math.abs(dragCurrent[1]-dragStart[1]);
+      if(w > 15 && h > 15){
+        pendingSite = rect;
+        const hint = document.getElementById('drawHint');
+        const saveBtn = document.getElementById('saveSiteBtn');
+        if(hint) hint.textContent = 'Boundary drawn — name it and save.';
+        if(saveBtn) saveBtn.disabled = false;
+      }
+    }
+    dragStart = null; dragCurrent = null;
+  });
+
+  draw();
+
+  const form = document.getElementById('siteForm');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const nameInput = document.getElementById('siteName');
+    const name = nameInput.value.trim();
+    if(!name || !pendingSite) return;
+    const w = Math.abs(pendingSite[1][0]-pendingSite[0][0]);
+    const h = Math.abs(pendingSite[2][1]-pendingSite[1][1]);
+    const areaHa = Math.round(w * h / 40); // simple scale factor, demo only
+    const site = { id: Date.now(), projectId, name, points: pendingSite, areaHa };
+    db.sites.push(site);
+
+    // seed 12 months of mock readings for the new site
+    let carbon = 800 + Math.random()*300, canopy = 50 + Math.random()*15, biodiv = 0.55 + Math.random()*0.2;
+    for(let m=0;m<12;m++){
+      carbon += 8 + Math.random()*10;
+      canopy = Math.min(95, canopy + Math.random()*1.2);
+      biodiv = Math.min(1, biodiv + Math.random()*0.01);
+      const d = new Date(); d.setMonth(d.getMonth() - (12-m));
+      db.readings.push({
+        id: Date.now()+m, siteId: site.id, date: d.toISOString().slice(0,10),
+        carbon: Math.round(carbon*10)/10, canopy: Math.round(canopy*10)/10, biodiv: Math.round(biodiv*1000)/1000
+      });
+    }
+    saveDB(db);
+    render();
+  });
+}
+
+function rectPoints(a,b){
+  const x1=Math.min(a[0],b[0]), x2=Math.max(a[0],b[0]);
+  const y1=Math.min(a[1],b[1]), y2=Math.max(a[1],b[1]);
+  return [[x1,y1],[x2,y1],[x2,y2],[x1,y2]];
+}
+function drawPoly(ctx, pts, stroke, fill, dash){
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0], pts[0][1]);
+  for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  ctx.closePath();
+  ctx.setLineDash(dash || []);
+  ctx.fillStyle = fill; ctx.fill();
+  ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+/* ---------- SITE DETAIL ---------- */
+let chartInstances = [];
+function renderSite(main, siteId){
+  const site = db.sites.find(s => s.id === siteId);
+  if(!site){ go({name:'dashboard'}); return; }
+  const project = db.projects.find(p => p.id === site.projectId);
+  const readings = db.readings.filter(r => r.siteId === site.id).sort((a,b)=>a.date.localeCompare(b.date));
+
+  main.appendChild(backLink(`&larr; ${escapeHtml(project ? project.name : 'Project')}`, () => go({name:'project', projectId: site.projectId})));
+
+  main.appendChild(el('div', '', `
+    <h1>${escapeHtml(site.name)}</h1>
+    <p class="lead">${site.areaHa} hectares &middot; ${readings.length}-month performance</p>
+  `));
+
+  const latest = readings[readings.length-1] || {};
+  const first = readings[0] || {};
+  const statRow = el('div', 'stat-row', `
+    <div class="stat"><div class="num">${latest.carbon ?? '—'}</div><div class="lab">Carbon (t)</div></div>
+    <div class="stat"><div class="num">${latest.canopy ?? '—'}%</div><div class="lab">Canopy cover</div></div>
+    <div class="stat"><div class="num">${latest.biodiv ?? '—'}</div><div class="lab">Biodiversity index</div></div>
+    <div class="stat"><div class="num">${readings.length ? '+'+Math.round(((latest.carbon-first.carbon)/Math.max(1,first.carbon))*100)+'%' : '—'}</div><div class="lab">Carbon growth (period)</div></div>
+  `);
+  main.appendChild(statRow);
+
+  chartInstances.forEach(c => c.destroy());
+  chartInstances = [];
+
+  const grid = el('div', 'grid');
+  main.appendChild(grid);
+
+  const c1 = makeChartCard('Carbon sequestered (tonnes)', 'carbonChart');
+  const c2 = makeChartCard('Canopy cover (%)', 'canopyChart');
+  grid.appendChild(c1); grid.appendChild(c2);
+  const c3 = makeChartCard('Biodiversity index', 'biodivChart');
+  c3.style.gridColumn = '1 / -1';
+  main.appendChild(c3);
+
+  const labels = readings.map(r => r.date);
+  chartInstances.push(lineChart('carbonChart', labels, readings.map(r=>r.carbon), '#2f7d4f'));
+  chartInstances.push(lineChart('canopyChart', labels, readings.map(r=>r.canopy), '#4a9d6f'));
+  chartInstances.push(lineChart('biodivChart', labels, readings.map(r=>r.biodiv), '#c98a2b'));
+}
+
+function makeChartCard(title, canvasId){
+  const card = el('div', 'card chart-card', `<h2 style="font-size:14px; color:var(--muted); margin-bottom:10px;">${title}</h2>`);
+  const canvas = document.createElement('canvas');
+  canvas.id = canvasId;
+  card.appendChild(canvas);
+  return card;
+}
+function lineChart(canvasId, labels, data, color){
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  return new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [{ data, borderColor: color, backgroundColor: color, tension:.35, pointRadius:3 }] },
+    options: {
+      responsive: true,
+      plugins: { legend: { display:false } },
+      scales: {
+        x: { ticks:{ color: getComputedStyle(document.documentElement).getPropertyValue('--muted') } },
+        y: { ticks:{ color: getComputedStyle(document.documentElement).getPropertyValue('--muted') } }
+      }
+    }
+  });
+}
+
+/* ---------- helpers ---------- */
+function el(tag, className, html){
+  const node = document.createElement(tag);
+  if(className) node.className = className;
+  if(html !== undefined) node.innerHTML = html;
+  return node;
+}
+function backLink(label, onClick){
+  const a = document.createElement('a');
+  a.href = '#'; a.className = 'backlink'; a.innerHTML = label;
+  a.addEventListener('click', (e)=>{ e.preventDefault(); onClick(); });
+  return a;
+}
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+/* ---------- init ---------- */
+trySession();
+if(session) showApp();
+</script>
+</body>
+</html>
